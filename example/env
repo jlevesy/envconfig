@@ -1,0 +1,10 @@
+# SplineReticulators configuration
+export GROOT_SPLINERS_0_RED=3.29395
+export GROOT_SPLINERS_100_WHITE=3.29394
+export GROOT_SPLINERS_0_BLUE=3.29393
+
+# GrootConfig
+export GROOT_LATERALIZER_MODE="extended"
+export GROOT_REAL="1"
+export GROOT_STREAMLINING_RATIO="543"
+export GROOT_TIMEOUT="2s"
