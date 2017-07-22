@@ -1,0 +1,15 @@
+dist: trusty
+
+language: go
+
+go:
+  - 1.8.3
+
+os:
+  - linux
+
+install:
+  - go get github.com/fatih/camelcase
+
+script:
+  - go test -v -cover -race  ./...

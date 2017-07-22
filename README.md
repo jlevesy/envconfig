@@ -1,5 +1,7 @@
 # EnvConfig
 
+[![Build Status](https://travis-ci.org/jlevesy/envconfig.svg?branch=master)](https://travis-ci.org/jlevesy/envconfig)
+
 EnvConfig is a go library which enables you to populate a struct according to
 the process environment. It infers environment variables names according to struct
 field names.
