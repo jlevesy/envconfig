@@ -229,6 +229,7 @@ collection at initialization.
 
 ## Todo
 
+- [ ] Control structure expanding using struct tags
 - [ ] Support custom environment variable names using tags
 - [ ] Better structure loop detection
 
