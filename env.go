@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// DefaultDepth is the default maximum depth allowed for a struct
 	DefaultDepth = 10
 )
 
@@ -34,16 +35,18 @@ type envConfig struct {
 	maxDepth  int
 }
 
-// New constructs a new instance of envSource
+// NewWithParsersAndDepth constructs a new instance of envConfig
+// It allows to setup prefix, separator supported parsers and maximum structure depth.
 func NewWithParsersAndDepth(prefix, separator string, parsers map[reflect.Type]parser.Parser, maxDepth int) ConfigLoader {
 	return &envConfig{prefix, separator, parsers, maxDepth}
 }
 
+// New returns a new instance of envConfig with given prefix and separator.
 func New(prefix, separator string) ConfigLoader {
 	return NewWithParsersAndDepth(prefix, separator, parser.LoadBasicTypes(), DefaultDepth)
 }
 
-// Load loads environmment data into given configuraton structure
+// Load loads environment data into given configuration structure
 func (e *envConfig) Load(config interface{}) error {
 
 	configVal := reflect.ValueOf(config)
