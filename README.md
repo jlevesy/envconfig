@@ -209,6 +209,63 @@ type AppConfig struct {
 }
 ```
 
+### noexpand struct tag
+
+Sometimes you might want to valuate structs using a smarter string
+parsing instead of definining multiple environment variables.
+
+If you tag your struct field with the `envconfig:"noexpand"` tag,
+envconfig will try to assign the given string value to the struct field
+and rely on a custom `Setter` to deal with parsing and assignment.
+
+It supports structs, slices and maps
+
+A small example to illustrate, let's say I want to set a slice of string as
+an environment variable
+
+```go
+// main.go
+
+import(
+    "reflect"
+    "strings"
+
+    "github.com/jlevesy/envconfig"
+    "github.com/jlevesy/envconfig/setter"
+)
+
+type ConfigStruct {
+    // Define a field Repos with the right struct tag
+    Repos []string `envconfig:"noexpand"`
+}
+
+// Setter for []string in our app
+// it splits given string according to the comma character
+func sliceOfStringSetter(strValue string, value reflect.Value) error {
+    value.Set(reflect.ValueOf(strings.Split(strValue, ",")))
+    return nil
+}
+
+func main() {
+    config := &ConfigStruct{}
+    setters := setter.LoadBasicTypes()
+
+    // define your setterFunc as setter for the type []string
+    setters[reflect.TypeOf([]string{})] = setter.SetterFunc(sliceOfStringSetter)
+
+    // Now load your configuration using your setters collection
+    if err := envconfig.NewWithSettersAndDepth("APP", "_", setters, 10).Load(config); err != nil {
+        // Fail gracefuly
+    }
+
+    // Do something awesome with your config [...]
+}
+
+```
+
+If I run `APP_REPOS="foo,bar,buz" go run main.go` loaded config will
+have the value `{Items:["foo","bar","buz"]}`
+
 ### The Setter interface
 
 EnvConfig depends on a setter collection representing all types it can
@@ -226,9 +283,12 @@ If you need to support different types, for instance an IP address, feel free to
 define your very own `Setter` or `SetterFunc`, and add it to your setter
 collection at initialization.
 
+Be careful however, because setting a invalid value using the `reflect`
+library might result in a panic !
+
 ## Todo
 
-- [ ] Control structure expanding using struct tags
+- [x] Control structure expanding using struct tags
 - [ ] Support custom environment variable names using tags
 - [ ] Better structure loop detection
 

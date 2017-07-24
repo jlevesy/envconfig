@@ -16,6 +16,9 @@ import (
 const (
 	// DefaultDepth is the default maximum depth allowed for a struct
 	DefaultDepth = 10
+
+	envConfigTag = "envconfig"
+	noExpand     = "noexpand"
 )
 
 // ConfigLoader interface is an object that can be used to Loader
@@ -119,7 +122,19 @@ func (e *envConfig) analyzeStruct(configType reflect.Type, currentPath path) ([]
 			continue
 		}
 
-		values, err := e.analyzeValue(field.Type, append(currentPath, field.Name))
+		fieldPath := append(currentPath, field.Name)
+
+		if t, ok := field.Tag.Lookup(envConfigTag); ok {
+			if t == noExpand {
+				if v := e.loadValue(fieldPath); v != nil {
+					res = append(res, v)
+				}
+			}
+
+			continue
+		}
+
+		values, err := e.analyzeValue(field.Type, fieldPath)
 
 		if err != nil {
 			return []*envValue{}, err
@@ -238,6 +253,7 @@ func (e *envConfig) assignValue(val reflect.Value, valType reflect.Type, current
 		if err != nil {
 			return err
 		}
+
 		err = e.assignValue(val, valType, currentPath, strValue)
 	case reflect.Struct:
 		err = e.assignToStruct(val, valType, currentPath, strValue)
@@ -267,6 +283,18 @@ func (e *envConfig) assignToStruct(val reflect.Value, valType reflect.Type, curr
 
 	valType = structField.Type
 	val = val.FieldByName(fieldName)
+
+	// If we're dealing with a noexpand struct
+	// Directly perform allocation then intent to set value
+	if t, ok := structField.Tag.Lookup(envConfigTag); ok {
+		if t == noExpand {
+			val, _, err := e.allocate(val, valType)
+			if err != nil {
+				return err
+			}
+			return e.setValue(val, strValue)
+		}
+	}
 
 	return e.assignValue(val, valType, currentPath, strValue)
 }

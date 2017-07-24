@@ -4,7 +4,9 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/jlevesy/envconfig/setter"
 )
@@ -1319,6 +1321,188 @@ func TestLoadConfig(t *testing.T) {
 				if *result != *expectation {
 					t.Logf("Invalid assignation, expected %v got %v", expectation, result)
 					t.Fail()
+				}
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Label, func(t *testing.T) {
+			setupEnv(testCase.Env)
+			err := subject.Load(testCase.Result)
+			testCase.Then(t, testCase.Expectation, testCase.Result, err)
+			cleanupEnv(testCase.Env)
+		})
+	}
+}
+
+type yetAnotherConfigStruct struct {
+	Date        time.Time            `envconfig:"noexpand"`
+	PtrDate     *time.Time           `envconfig:"noexpand"`
+	Items       []string             `envconfig:"noexpand"`
+	Configs     []*grootConfig       `envconfig:"noexpand"`
+	OtherConfig *anotherConfigStruct `envconfig:"noexpand"`
+}
+
+type grootConfig struct {
+	IamGroot string
+}
+
+func sliceOfGrootSetter(strValue string, value reflect.Value) error {
+	split := strings.Split(strValue, ",")
+	res := make([]*grootConfig, len(split))
+
+	for i, s := range split {
+		res[i] = &grootConfig{s}
+	}
+
+	value.Set(reflect.ValueOf(res))
+	return nil
+}
+
+func sliceOfStringSetter(strValue string, value reflect.Value) error {
+	value.Set(reflect.ValueOf(strings.Split(strValue, ",")))
+	return nil
+}
+
+func TestLoadConfigNoExpand(t *testing.T) {
+	setters := setter.LoadBasicTypes()
+
+	setters[reflect.TypeOf([]string{})] = setter.SetterFunc(sliceOfStringSetter)
+	setters[reflect.TypeOf([]*grootConfig{})] = setter.SetterFunc(sliceOfGrootSetter)
+
+	subject := &envConfig{"", "_", setters, 10}
+
+	testCases := []struct {
+		Label       string
+		Result      *yetAnotherConfigStruct
+		Expectation *yetAnotherConfigStruct
+		Env         map[string]string
+		Then        func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error)
+	}{
+		{
+			"WithValueStruct",
+			&yetAnotherConfigStruct{},
+			&yetAnotherConfigStruct{
+				Date: func() time.Time {
+					res, _ := time.Parse(time.RFC3339, "2009-08-25T00:00:00Z")
+					return res
+				}(),
+			},
+			map[string]string{
+				"DATE": "2009-08-25T00:00:00Z",
+			},
+			func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error) {
+				if err != nil {
+					t.Log("Wasn't expecting an error, got :", err)
+					t.FailNow()
+				}
+
+				if result.Date != expectation.Date {
+					t.Logf("Invalid assignation, expected %v got %v", expectation, result)
+					t.Fail()
+				}
+			},
+		},
+		{
+			"WithPtrStruct",
+			&yetAnotherConfigStruct{},
+			&yetAnotherConfigStruct{
+				PtrDate: func() *time.Time {
+					res, _ := time.Parse(time.RFC3339, "2009-08-25T00:00:00Z")
+					return &res
+				}(),
+			},
+			map[string]string{
+				"PTR_DATE": "2009-08-25T00:00:00Z",
+			},
+			func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error) {
+				if err != nil {
+					t.Log("Wasn't expecting an error, got :", err)
+					t.FailNow()
+				}
+
+				if *(result.PtrDate) != *(expectation.PtrDate) {
+					t.Logf("Invalid assignation, expected %v got %v", expectation, result)
+					t.Fail()
+				}
+			},
+		},
+		{
+			"WithCollection",
+			&yetAnotherConfigStruct{},
+			&yetAnotherConfigStruct{
+				Items: []string{
+					"foo",
+					"bar",
+					"buz",
+				},
+			},
+			map[string]string{
+				"ITEMS": "foo,bar,buz",
+			},
+			func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error) {
+				if err != nil {
+					t.Log("Wasn't expecting an error, got :", err)
+					t.FailNow()
+				}
+
+				if len(result.Items) != len(expectation.Items) {
+					t.Logf("Assignation failed, expected length of %d got %d", len(expectation.Items), len(result.Items))
+					t.FailNow()
+				}
+
+				if result.Items[0] != expectation.Items[0] ||
+					result.Items[1] != expectation.Items[1] ||
+					result.Items[2] != expectation.Items[2] {
+					t.Logf("Invalid assignation, expected %v got %v", expectation, result)
+					t.FailNow()
+				}
+			},
+		},
+		{
+			"WithCollectionOfStructs",
+			&yetAnotherConfigStruct{},
+			&yetAnotherConfigStruct{
+				Configs: []*grootConfig{
+					{"I"},
+					{"AM"},
+					{"GROOT"},
+				},
+			},
+			map[string]string{
+				"CONFIGS": "I,AM,GROOT",
+			},
+			func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error) {
+				if err != nil {
+					t.Log("Wasn't expecting an error, got :", err)
+					t.FailNow()
+				}
+
+				if len(result.Configs) != len(expectation.Configs) {
+					t.Logf("Assignation failed, expected length of %d got %d", len(expectation.Configs), len(result.Configs))
+					t.FailNow()
+				}
+
+				if *(result.Configs[0]) != *(expectation.Configs[0]) ||
+					*(result.Configs[1]) != *(expectation.Configs[1]) ||
+					*(result.Configs[2]) != *(expectation.Configs[2]) {
+					t.Logf("Invalid assignation, expected %v got %v", expectation, result)
+					t.FailNow()
+				}
+			},
+		},
+		{
+			"WithUnknownSetter",
+			&yetAnotherConfigStruct{},
+			nil,
+			map[string]string{
+				"OTHER_CONFIG": "I,AM,GROOT",
+			},
+			func(t *testing.T, expectation, result *yetAnotherConfigStruct, err error) {
+				if err == nil {
+					t.Log("Expecting an error, got nothing :(")
+					t.FailNow()
 				}
 			},
 		},
