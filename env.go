@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jlevesy/envconfig/parser"
+	"github.com/jlevesy/envconfig/setter"
 
 	"github.com/fatih/camelcase"
 )
@@ -31,19 +31,19 @@ type ConfigLoader interface {
 type envConfig struct {
 	prefix    string
 	separator string
-	parsers   map[reflect.Type]parser.Parser
+	setters   map[reflect.Type]setter.Setter
 	maxDepth  int
 }
 
-// NewWithParsersAndDepth constructs a new instance of envConfig
-// It allows to setup prefix, separator supported parsers and maximum structure depth.
-func NewWithParsersAndDepth(prefix, separator string, parsers map[reflect.Type]parser.Parser, maxDepth int) ConfigLoader {
-	return &envConfig{prefix, separator, parsers, maxDepth}
+// NewWithSettersAndDepth constructs a new instance of envConfig
+// It allows to setup prefix, separator supported setters and maximum structure depth.
+func NewWithSettersAndDepth(prefix, separator string, setters map[reflect.Type]setter.Setter, maxDepth int) ConfigLoader {
+	return &envConfig{prefix, separator, setters, maxDepth}
 }
 
 // New returns a new instance of envConfig with given prefix and separator.
 func New(prefix, separator string) ConfigLoader {
-	return NewWithParsersAndDepth(prefix, separator, parser.LoadBasicTypes(), DefaultDepth)
+	return NewWithSettersAndDepth(prefix, separator, setter.LoadBasicTypes(), DefaultDepth)
 }
 
 // Load loads environment data into given configuration structure
@@ -381,16 +381,16 @@ func (e *envConfig) setValue(value reflect.Value, strValue string) error {
 		return fmt.Errorf("Value [%v] cannot be set", value)
 	}
 
-	parser, ok := e.parsers[value.Type()]
+	setter, ok := e.setters[value.Type()]
 
 	if !ok {
 		return fmt.Errorf(
-			"Unsupported type [%s], please consider adding custom parser",
+			"Unsupported type [%s], please consider adding custom setter",
 			value.Type().String(),
 		)
 	}
 
-	return parser.Set(strValue, value)
+	return setter.Set(strValue, value)
 }
 
 func (e *envConfig) nextLevelKeys(prefix string, envVars []string) []string {

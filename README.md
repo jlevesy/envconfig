@@ -2,8 +2,7 @@
 
 [![Build Status](https://travis-ci.org/jlevesy/envconfig.svg?branch=master)](https://travis-ci.org/jlevesy/envconfig)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jlevesy/envconfig)](https://goreportcard.com/report/github.com/jlevesy/envconfig)
-[![codecov](https://codecov.io/gh/jlevesy/envconfig/branch/master/graph/badge.svg)](https://codecov.io/gh/jlevesy/envconfig)
-
+[![codecov](https://codecov.io/gh/jlevesy/envconfig/branch/master/graph/badge.svg)](https://codecov.io/gh/jlevesy/envconfig) 
 
 EnvConfig is a go library which enables you to populate a struct according to
 the process environment. It infers environment variables names according to struct
@@ -22,7 +21,7 @@ Here's a basic example.
 package example
 
 import (
-	"github.com/jlevesy/envconfig/parser"
+	"github.com/jlevesy/envconfig/setter"
 	"github.com/jlevesy/envconfig"
 )
 
@@ -94,17 +93,17 @@ It takes two arguments:
 Another constructor is available
 
 ```
-        env := envconfig.NewWithParsersAndDepth(prefix, separator, parsers, maxDepth)
+        env := envconfig.NewWithSettersAndDepth(prefix, separator, setters, maxDepth)
 ```
 
 It adds two more arguments
 
-- A parser collection which  is a `map[reflect.Type]parser.Parser` representing
+- A setter collection which  is a `map[reflect.Type]setter.Setter` representing
   all types envConfig can write to.
 - A maxdepth, setting a hard limit on structure depth to avoid type loops.
 
-`envconfig.New(prefix, separator)`, is equivalent to `envconfig.NewWithParsersAndDepth(prefix, separator,
-parser.LoadBasicTypes(), 10)`
+`envconfig.New(prefix, separator)`, is equivalent to `envconfig.NewWithSettersAndDepth(prefix, separator,
+setter.LoadBasicTypes(), 10)`
 
 ### Environment variable name inference
 
@@ -197,7 +196,7 @@ type AppConfig struct {
 ### Maps
 
 You can affect values into maps, just like arrays and slices, however key type
-must be supported by the parser colllection.
+must be supported by the setter colllection.
 
 ```go
 type NestedAppConfig struct {
@@ -210,21 +209,21 @@ type AppConfig struct {
 }
 ```
 
-### The Parser interface
+### The Setter interface
 
-EnvConfig depends on a parser collection representing all types it can
+EnvConfig depends on a setter collection representing all types it can
 write to.
 
-A Parser is defined by the following interface.
+A Setter is defined by the following interface.
 
 ```
-type Parser interface {
+type Setter interface {
 	Set(strValue string, val reflect.Value) error
 }
 ```
 
 If you need to support different types, for instance an IP address, feel free to
-define your very own `Parser` or `ParserFunc`, and add it to your parser
+define your very own `Setter` or `SetterFunc`, and add it to your setter
 collection at initialization.
 
 ## Todo

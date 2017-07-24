@@ -1,4 +1,4 @@
-package parser
+package setter
 
 import (
 	"reflect"
@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func setFloat(floatType int) ParserFunc {
-	return ParserFunc(func(strValue string, value reflect.Value) error {
+func setFloat(floatType int) SetterFunc {
+	return SetterFunc(func(strValue string, value reflect.Value) error {
 		v, err := strconv.ParseFloat(strValue, floatType)
 		if err != nil {
 			return err
@@ -19,8 +19,8 @@ func setFloat(floatType int) ParserFunc {
 	})
 }
 
-func setInt(intLength int) ParserFunc {
-	return ParserFunc(func(strValue string, value reflect.Value) error {
+func setInt(intLength int) SetterFunc {
+	return SetterFunc(func(strValue string, value reflect.Value) error {
 		v, err := strconv.ParseInt(strValue, 0, intLength)
 
 		if err != nil {
@@ -33,8 +33,8 @@ func setInt(intLength int) ParserFunc {
 	})
 }
 
-func setUint(uintLength int) ParserFunc {
-	return ParserFunc(func(strValue string, value reflect.Value) error {
+func setUint(uintLength int) SetterFunc {
+	return SetterFunc(func(strValue string, value reflect.Value) error {
 		v, err := strconv.ParseUint(strValue, 0, uintLength)
 
 		if err != nil {
@@ -88,10 +88,10 @@ func setDuration(strValue string, value reflect.Value) error {
 	return nil
 }
 
-// LoadBasicTypes returns a collection of Parser for
+// LoadBasicTypes returns a collection of Setter for
 // golang basic types.
-func LoadBasicTypes() map[reflect.Type]Parser {
-	res := make(map[reflect.Type]Parser)
+func LoadBasicTypes() map[reflect.Type]Setter {
+	res := make(map[reflect.Type]Setter)
 
 	// Floats
 	res[reflect.TypeOf(float64(0.0))] = setFloat(64)
@@ -112,10 +112,10 @@ func LoadBasicTypes() map[reflect.Type]Parser {
 	res[reflect.TypeOf(uint64(0))] = setUint(64)
 
 	// Misc
-	res[reflect.TypeOf("")] = ParserFunc(setString)
-	res[reflect.TypeOf(true)] = ParserFunc(setBool)
-	res[reflect.TypeOf(time.Time{})] = ParserFunc(setTime)
-	res[reflect.TypeOf(time.Duration(0))] = ParserFunc(setDuration)
+	res[reflect.TypeOf("")] = SetterFunc(setString)
+	res[reflect.TypeOf(true)] = SetterFunc(setBool)
+	res[reflect.TypeOf(time.Time{})] = SetterFunc(setTime)
+	res[reflect.TypeOf(time.Duration(0))] = SetterFunc(setDuration)
 
 	return res
 }

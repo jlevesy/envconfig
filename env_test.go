@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/jlevesy/envconfig/parser"
+	"github.com/jlevesy/envconfig/setter"
 )
 
 func setupEnv(env map[string]string) {
@@ -104,7 +104,7 @@ func testAnalyzeStructShouldFail(t *testing.T, expectation, result sortableEnvVa
 }
 
 func TestAnalyzeStruct(t *testing.T) {
-	subject := &envConfig{"", "_", map[reflect.Type]parser.Parser{}, 10}
+	subject := &envConfig{"", "_", map[reflect.Type]setter.Setter{}, 10}
 
 	testCases := []struct {
 		Label       string
@@ -580,7 +580,7 @@ func TestEnvVarFromPath(t *testing.T) {
 			subject := &envConfig{
 				testCase.Prefix,
 				testCase.Separator,
-				map[reflect.Type]parser.Parser{},
+				map[reflect.Type]setter.Setter{},
 				10,
 			}
 
@@ -596,7 +596,7 @@ func TestEnvVarFromPath(t *testing.T) {
 }
 
 func TestNextLevelKeys(t *testing.T) {
-	subject := &envConfig{"", "_", map[reflect.Type]parser.Parser{}, 10}
+	subject := &envConfig{"", "_", map[reflect.Type]setter.Setter{}, 10}
 	testCases := []struct {
 		Label       string
 		Prefix      string
@@ -650,7 +650,7 @@ func TestNextLevelKeys(t *testing.T) {
 
 func TestEnvVarsWithPrefix(t *testing.T) {
 
-	subject := &envConfig{"", "_", map[reflect.Type]parser.Parser{}, 10}
+	subject := &envConfig{"", "_", map[reflect.Type]setter.Setter{}, 10}
 
 	testCases := []struct {
 		Label       string
@@ -714,7 +714,7 @@ func TestUnique(t *testing.T) {
 }
 
 func TestKeyFromEnvVar(t *testing.T) {
-	subject := &envConfig{"", "_", map[reflect.Type]parser.Parser{}, 10}
+	subject := &envConfig{"", "_", map[reflect.Type]setter.Setter{}, 10}
 	testCases := []struct {
 		Label       string
 		Prefix      string
@@ -774,7 +774,7 @@ func TestAssignValues(t *testing.T) {
 	subject := &envConfig{
 		"",
 		"_",
-		parser.LoadBasicTypes(),
+		setter.LoadBasicTypes(),
 		10,
 	}
 
@@ -1286,7 +1286,7 @@ type anotherConfigStruct struct {
 }
 
 func TestLoadConfig(t *testing.T) {
-	subject := &envConfig{"", "_", parser.LoadBasicTypes(), 10}
+	subject := &envConfig{"", "_", setter.LoadBasicTypes(), 10}
 
 	testCases := []struct {
 		Label       string
